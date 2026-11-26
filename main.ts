@@ -6,11 +6,37 @@ import { dirname } from "node:path";
 const ENTRY =
   "I ran the nightly stability audit and that glass failed every test, so I'm filing a product recall: the glass was defective, my inspection was flawless.";
 
-const chars = [...ENTRY].length;
-if (chars < 1 || chars > 200) {
-  throw new Error(`entry must be 1-200 characters, got ${chars}`);
+// Competition limits for the entry text.
+const MIN_CHARS = 1;
+const MAX_CHARS = 200;
+
+// Default output location when no path argument is given.
+const DEFAULT_OUT = "/output/entry.txt";
+
+/** Count characters the way the competition counts them (code points). */
+function charCount(text: string): number {
+  return [...text].length;
 }
 
-const out = process.argv[2] ?? "/output/entry.txt";
+/** Fail fast if the entry breaks the competition's length rules. */
+function validateEntry(text: string): void {
+  const chars = charCount(text);
+  if (chars < MIN_CHARS || chars > MAX_CHARS) {
+    throw new Error(
+      `entry must be ${MIN_CHARS}-${MAX_CHARS} characters, got ${chars}`,
+    );
+  }
+}
+
+/** Resolve the output path from argv, falling back to the default. */
+function resolveOutputPath(): string {
+  return process.argv[2] ?? DEFAULT_OUT;
+}
+
+validateEntry(ENTRY);
+const out = resolveOutputPath();
+
+// Write the entry exactly as-is: no trailing newline, no extra text,
+// so the output file is byte-identical on every run.
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, ENTRY, "utf8");
